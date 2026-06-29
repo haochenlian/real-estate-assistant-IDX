@@ -1,0 +1,15 @@
+# Core (add/adjust as the project develops)
+openai
+faiss-cpu
+pandas
+numpy
+python-dotenv
+requests
+
+# API / service layer
+fastapi
+uvicorn
+
+# Optional — add when you build these parts
+# langchain
+# twilio        # WhatsApp

@@ -1,0 +1,30 @@
+# ---- Raw data: never commit (per IDX program rules) ----
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.sql
+*.db
+*.sqlite
+data/
+raw/
+
+# ---- Secrets / credentials ----
+.env
+*.key
+secrets.*
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+venv/
+.venv/
+env/
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

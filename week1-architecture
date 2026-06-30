@@ -1,0 +1,113 @@
+# Architecture Documentation — Multi-Agent Real Estate Assistant
+
+**Week 1 Deliverable — OpenClaw Architecture Fundamentals**
+Author: Howard (Haochen) Lian — IDX Exchange, Agentic AI Track, Summer 2026
+
+---
+
+## 1. Overview
+
+This system is a **multi-agent AI assistant** built on the **OpenClaw** runtime. A user
+talks to it in natural language over **WhatsApp** (and later email); OpenClaw interprets the
+request, routes it to the right specialized agent/skill, queries the MLS databases, and
+returns a formatted answer — all in real time.
+
+The two data sources are MySQL tables in the same schema:
+
+- **`rets_property`** — active California listings, 130+ fields (live search & discovery).
+- **`california_sold`** — sold/closed transactions, 46 fields (market analytics & comps).
+
+---
+
+## 2. OpenClaw Core Concepts
+
+OpenClaw is a multi-agent orchestration runtime that handles skill routing, session state,
+channel integration, and tool execution. The building blocks:
+
+| Component | Role |
+|-----------|------|
+| **Channels** | Communication interfaces — WhatsApp, email, web. Entry/exit point for messages. |
+| **Orchestrator** | Classifies each query's intent and routes it to the correct skill/agent (or several). |
+| **Skills** | Modular capability units — property search, market stats, recommendations, RAG, email. |
+| **Tools** | Typed async functions a skill can call (e.g., a parameterized SQL query). |
+| **Sessions** | Per-user conversation state and short-term memory (budget, city, last results, step). |
+| **Memory** | Short-term session state + long-term vector storage (embeddings for semantic search). |
+
+---
+
+## 3. End-to-End Request Flow
+
+```mermaid
+flowchart TD
+    U([User]) -->|natural language| WA[WhatsApp Channel]
+    WA --> RT[OpenClaw Runtime]
+    RT --> SES[(Session / Memory)]
+    RT --> ORCH{Orchestrator<br/>intent classification}
+
+    ORCH -->|search| PS[Property Search Agent]
+    ORCH -->|market| MS[Market Stats Agent]
+    ORCH -->|recommend| RE[Recommendation Agent]
+    ORCH -->|knowledge| RAG[RAG Knowledge Agent]
+    ORCH -->|email| EM[Email Draft Agent]
+
+    PS --> DB1[(rets_property<br/>active listings)]
+    RE --> DB1
+    MS --> DB2[(california_sold<br/>sold comps)]
+    RE --> DB2
+    RAG --> KB[(Indexed docs +<br/>MLS field definitions)]
+
+    PS --> FMT[Format Response]
+    MS --> FMT
+    RE --> FMT
+    RAG --> FMT
+    EM -->|draft, needs approval| FMT
+
+    FMT --> WA
+    WA -->|formatted reply| U
+```
+
+**Step by step:**
+
+1. **User → WhatsApp Channel** — the user sends a free-text message (e.g., *"3-bed condos in Irvine under $1.5M with a pool"*).
+2. **Channel → Runtime** — OpenClaw receives the message and loads the user's **session**.
+3. **Orchestrator** — classifies intent: `search`, `market`, `recommend`, `knowledge`, or `mixed`.
+4. **Skill/Agent execution** — the chosen agent runs its **tools** (parameterized SQL against `rets_property` / `california_sold`, embedding similarity, or RAG retrieval).
+5. **Memory update** — results and preferences are written back to the session for follow-ups.
+6. **Format response** — output is formatted into clean WhatsApp message cards.
+7. **Reply → User** — the answer is sent back over the same channel.
+
+---
+
+## 4. Specialized Agents (built over Weeks 2–8, unified in Week 9)
+
+| Agent | Primary table(s) | Responsibility |
+|-------|------------------|----------------|
+| Property Search | `rets_property` | NL query → structured filters → listing results |
+| Market Stats | `california_sold` | Aggregations: avg/median price, DOM, list-to-close, trends |
+| Recommendation | both | Hybrid (structured + semantic) similarity, comp-validated pricing |
+| RAG Knowledge | indexed docs | Grounded answers about MLS fields & real-estate terms |
+| Email Draft | both | Drafts alerts/reports — **send only after human approval** |
+
+---
+
+## 5. Data Layer
+
+- Both tables live in one MySQL schema (`idx_exchange`); joined via
+  `rets_property.L_ListingID = california_sold.ListingKey`, or matched on city + postal
+  code for market-level analysis.
+- All queries are **parameterized** (no string concatenation) for SQL-injection safety.
+- Result sets are capped (≤50 rows/query); raw datasets are never bulk-exported.
+
+---
+
+## 6. Safety / Guardrails (applied from Week 11)
+
+- **Human-in-the-loop** for every outbound action (emails are drafted, never auto-sent).
+- Secrets (`OPENAI_API_KEY`, DB credentials) live only in `.env`, never committed or logged.
+- The agent never exposes credentials or bulk-downloads full MLS data.
+
+---
+
+## 7. Status
+
+🚧 Week 1 — architecture defined. Next: Week 2 natural-language property-search skill over `rets_property`.

@@ -1,0 +1,78 @@
+# Week 0 — Environment Setup (Completed)
+
+IDX Exchange · Agentic AI Track · OpenClaw Multi-Agent Real Estate Assistant
+Author: Howard (Haochen) Lian — Northwestern University
+
+---
+
+## Summary
+
+Local development environment is fully set up and verified. The OpenClaw agent is
+running, connected to OpenAI, linked to WhatsApp, and both MLS datasets are imported
+into local MySQL.
+
+## What was installed
+
+| Component | Tool / Version | Status |
+|-----------|----------------|--------|
+| Version control | Git | ✅ installed |
+| Runtime | Node.js | ✅ installed |
+| Language | Python 3.12 (via Homebrew) | ✅ installed |
+| Database | MySQL (Homebrew, local) | ✅ running |
+| Agent runtime | OpenClaw 2026.6.10 | ✅ installed (global) |
+| Model provider | OpenAI (`openai/gpt-5.5`) | ✅ configured |
+| Channel | WhatsApp | ✅ linked |
+| Web search | DuckDuckGo (key-free) | ✅ enabled |
+
+Agent name: **Zion**. Gateway runs as a background LaunchAgent
+(`ai.openclaw.gateway.plist`); Control UI at `http://127.0.0.1:18789/`.
+
+## Database import — `idx_exchange` schema
+
+Both dumps imported into local MySQL and row counts verified:
+
+```sql
+SELECT
+  (SELECT COUNT(*) FROM rets_property)   AS active,
+  (SELECT COUNT(*) FROM california_sold) AS sold;
+```
+
+| Table | Rows imported |
+|-------|---------------|
+| `rets_property` (active listings) | **53,122** |
+| `california_sold` (sold comps) | **87,157** |
+
+> Note: the intern data dump is a subset of the full production MLS database referenced
+> in the handbook (~228K / ~439K). The provided `.sql` files import completely (clean
+> `COMMIT` at end of file) — the row counts above reflect the full contents of the
+> supplied dumps.
+
+## WhatsApp verification (Week 0 deliverable)
+
+- WhatsApp linked via QR (personal-phone mode; sender number allowlisted).
+- Sent a test message from phone → agent **Zion** replied successfully.
+- Send + receive confirmed working. ✅
+
+## Environment variables
+
+`.env` configured locally (not committed — blocked by `.gitignore`):
+
+```
+OPENAI_API_KEY=********
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=          # Homebrew MySQL: no root password
+MYSQL_DATABASE=idx_exchange
+```
+
+## Deliverable checklist
+
+- [x] OpenClaw installed and agent running
+- [x] Both MLS tables imported into MySQL and row counts verified
+- [x] OpenAI API configured and working
+- [x] WhatsApp linked; agent sends & receives a test message
+- [x] `.env` set with required keys
+
+**Status: Week 0 complete.** Next: Week 1 — OpenClaw architecture documentation
+(`docs/architecture.md`), then Week 2 — natural-language property search over
+`rets_property`.

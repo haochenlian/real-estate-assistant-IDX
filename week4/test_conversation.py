@@ -62,10 +62,59 @@ def test_step_counter_increments():
     assert get_session(uid).step == 2
 
 
+def test_all_info_in_one_message():
+    """If the user says everything at once, search immediately -- no follow-ups."""
+    uid = "u7"; fresh(uid)
+    r = handle_message(uid, "3-bed condos in Irvine under $1.5M")
+    assert r["action"] == "search"
+    assert r["filters"]["city"] == "Irvine"
+    assert r["filters"]["beds"] == 3
+    assert r["filters"]["type"] == "Condominium"
+
+
+def test_user_changes_their_mind():
+    """A later value overwrites an earlier one for the same slot."""
+    uid = "u8"; fresh(uid)
+    handle_message(uid, "homes in Irvine under $1M")
+    handle_message(uid, "actually under $1.2M")
+    assert get_session(uid).max_price == 1_200_000     # updated, not stuck at 1M
+
+
+def test_out_of_order_information():
+    """User gives type, then city, then budget -- still reaches a search."""
+    uid = "u9"; fresh(uid)
+    handle_message(uid, "I want a condo")       # type first
+    handle_message(uid, "in San Diego")         # city second
+    r = handle_message(uid, "under 800k")       # budget last
+    assert r["action"] == "search"
+    assert r["filters"]["type"] == "Condominium"
+    assert r["filters"]["city"] == "San Diego"
+    assert r["filters"]["max_price"] == 800_000
+
+
+def test_optional_details_are_captured():
+    """Extras like pool are remembered even though they aren't required to search."""
+    uid = "u10"; fresh(uid)
+    r = handle_message(uid, "condo in Irvine under $1M with a pool")
+    assert r["action"] == "search"
+    assert r["filters"]["pool"] == "True"
+
+
+def test_unrecognized_input_keeps_asking():
+    """Vague text the parser can't read must not crash or fill slots falsely."""
+    uid = "u11"; fresh(uid)
+    r = handle_message(uid, "somewhere nice and cozy")
+    assert r["action"] == "ask" and r["slot"] == "city"   # still needs a city
+    assert get_session(uid).city is None                  # nothing wrongly captured
+
+
 TESTS = [test_asks_for_missing_budget_first, test_asks_for_city_when_nothing_given,
          test_state_accumulates_across_turns, test_reaches_search_when_complete,
          test_clear_session_starts_over, test_two_users_are_independent,
-         test_step_counter_increments]
+         test_step_counter_increments,
+         test_all_info_in_one_message, test_user_changes_their_mind,
+         test_out_of_order_information, test_optional_details_are_captured,
+         test_unrecognized_input_keeps_asking]
 
 if __name__ == "__main__":
     passed = 0

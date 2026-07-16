@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/30101601/README.md)
+[README.md](https://github.com/user-attachments/files/30102021/README.md)
 # Week 4 — Conversational Property-Search Agent
 
 ## In one sentence
@@ -6,6 +6,25 @@
 This turns the one-shot search into a **back-and-forth conversation**: the agent
 remembers what you've said, asks for whatever is still missing, and searches once
 it has enough.
+
+## What Week 4 does (two parts, one idea)
+
+**1. It can chat and it has memory (the core ability).**
+The user doesn't have to say everything at once — they can fill in details across
+several messages. Each turn the agent: records what the user said -> checks what's
+still missing -> asks a follow-up if something's missing. Once it has enough, it hands
+off to the Week 3 search automatically. This solves the real-world fact that people
+give information a little at a time.
+
+**2. Each user has their own session (the reliability guarantee).**
+Every user gets an independent session, keyed by `user_id`, so person A's budget never
+lands on person B's search. This keeps information from mixing when several people use
+the agent at the same time.
+
+Both parts are really two sides of the **same thing — the session notepad**: the
+notepad does the "remember + check what's missing," and keying it by `user_id` gives
+"one notepad per person." In short: **Week 4 wraps Weeks 2 + 3 in a shell that can
+chat, remember, and tell users apart.**
 
 ## What problem it solves
 

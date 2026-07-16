@@ -139,17 +139,29 @@ def _summary(s: UserSession) -> str:
 
 
 if __name__ == "__main__":
-    # Simulate a multi-turn conversation for one user.
-    uid = "whatsapp:+15551234567"
-    clear_session(uid)
-    conversation = [
-        "Find me a home in Irvine",
-        "under $1.2M",
-        "a condo with at least 2 beds",
-    ]
-    for msg in conversation:
-        print(f"\nUSER : {msg}")
-        result = handle_message(uid, msg)
-        print(f"AGENT: {result['message']}")
-        if result["action"] == "search":
-            print("       filters:", {k: v for k, v in result["filters"].items() if v})
+    # Three example conversations showing different ways a user might talk.
+    scenarios = {
+        "Drip-feed (agent asks follow-ups)": [
+            "Find me a home in Irvine",
+            "under $1.2M",
+            "a condo with at least 2 beds",
+        ],
+        "All at once (no follow-ups needed)": [
+            "3-bed condos in San Diego under $900k with a pool",
+        ],
+        "Out of order (type, then city, then budget)": [
+            "I want a townhouse",
+            "in Pasadena",
+            "under 1.5m",
+        ],
+    }
+    for title, messages in scenarios.items():
+        print(f"\n===== {title} =====")
+        uid = title
+        clear_session(uid)
+        for msg in messages:
+            print(f"USER : {msg}")
+            result = handle_message(uid, msg)
+            print(f"AGENT: {result['message']}")
+            if result["action"] == "search":
+                print("       filters:", {k: v for k, v in result["filters"].items() if v})

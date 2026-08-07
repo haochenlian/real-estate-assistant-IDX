@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/30812482/README.md)
+[README.md](https://github.com/user-attachments/files/30812713/README.md)
 # Week 7 — Hybrid Recommendation Engine
 
 ## In one sentence
@@ -135,13 +135,59 @@ a similar size range keeps the per-sqft average meaningful for *this* home.
 | File | What it is |
 |------|------------|
 | `recommender.py` | Hybrid scoring, ranking, and comp-based price validation. |
+| `test_recommender.py` | 19 tests covering scoring bands, ranking, the comp query, and price verdicts. |
 | `README.md` | This explanation. |
 
 ## How to run it
 
 ```bash
+# Worked example: ranked recommendations + a price assessment
 python3 recommender.py
+
+# Tests (should print 19/19 passed)
+python3 test_recommender.py
 ```
+
+## What the tests verify
+
+`test_recommender.py` covers 19 cases in four groups. None of them need a database or
+an API key.
+
+**Structured scoring — 6 tests**
+
+- An identical listing scores the full **60** points.
+- All four price bands land correctly: under $50K → 20, under $150K → 12,
+  under $300K → 5, beyond that → 0.
+- A different city costs 15 points; a different bedroom count costs 15 points.
+- All three size bands: within 300 sqft → 10, within 700 → 5, beyond → 0.
+- Missing fields don't crash — real listings often have blanks, so the scorer must
+  degrade gracefully instead of raising.
+
+**Semantic scoring — 3 tests**
+
+- Identical embeddings score the full **40** points.
+- Opposite embeddings score **0**, not a negative — similarity is clamped so an
+  unrelated listing can never drag the total below its structured score.
+- Missing embeddings score **0**, which is what proves recommendations still work
+  before the API key is wired up.
+
+**Hybrid score and ranking — 4 tests**
+
+- A perfect match on both halves totals exactly **100** (the cap holds).
+- The worked example ranks **A → C → B**, confirming the ordering logic.
+- The target listing is never recommended back to the user.
+- `top_k` returns exactly the requested number of results.
+
+**Price validation — 6 tests**
+
+- The comp query uses the ±20% size band (1500 sqft → 1200–1800) and its placeholders
+  match its parameters.
+- The comp query is injection-safe — a malicious city name stays in the parameters and
+  never reaches the SQL string.
+- All three verdicts trigger at the right thresholds: 0% → in line, +16.7% → above
+  market, −16.7% → below market.
+- When no comparable sales exist, it returns "not enough comparable sales" instead of
+  crashing on a divide-by-zero.
 
 Prints a worked example: a target listing, three candidates ranked by hybrid score, and
 a price assessment. No API key or database needed for the demo — structured scoring and
@@ -168,23 +214,18 @@ candidates.
 > to judge whether the asking price is fair. It is the first week that genuinely wires
 > earlier modules together.**
 
-Job 1(推荐) 是代码级复用 Week 6——Week 7 自己写了一套硬指标打分(60 分),同时 import Week 6 的 cosine_similarity 来算语义相似度(40 分),两者相加得出 0–100 的推荐分。
-
-Job 2(价格验证) 是数据级复用 Week 5——它用的是 Week 5 那张 california_sold 成交表和"每平尺价"的思路,但 SQL 是 Week 7 自己新写的(同城 + 面积 ±20%),因为 Week 5 算的是全城行情,粒度太粗,不适合给单套房估价。
-
-更短的一句话版:
-
-Job 1 真的调用了 Week 6 的代码;Job 2 只借用 Week 5 的数据和方法,查询是自己写的。
-
-英文版(周会/面试用):
-
-"Job 1 reuses Week 6 at the code level — it imports the cosine similarity function for the semantic 40 points, on top of the structured 60 points I wrote here. Job 2 reuses Week 5 at the data level — same sold-comps table and price-per-sqft approach, but a new query scoped to the same city and ±20% of the target's size, since Week 5's city-wide average is too coarse to value a single home."
-
-
 ```
 Week 7 [integration]  user likes this home
                           -> recommend similar ones
                           -> validate the price against sold comps
                              ^ uses Week 6 semantics + Week 5 sold data
 ```
+Job 1(推荐) 是代码级复用 Week 6——Week 7 自己写了一套硬指标打分(60 分),同时 import Week 6 的 cosine_similarity 来算语义相似度(40 分),两者相加得出 0–100 的推荐分。
 
+Job 2(价格验证) 是数据级复用 Week 5——它用的是 Week 5 那张 california_sold 成交表和"每平尺价"的思路,但 SQL 是 Week 7 自己新写的(同城 + 面积 ±20%),因为 Week 5 算的是全城行情,粒度太粗,不适合给单套房估价。
+
+更短的一句话版:
+Job 1 真的调用了 Week 6 的代码;Job 2 只借用 Week 5 的数据和方法,查询是自己写的。
+
+英文版(周会/面试用):
+"Job 1 reuses Week 6 at the code level — it imports the cosine similarity function for the semantic 40 points, on top of the structured 60 points I wrote here. Job 2 reuses Week 5 at the data level — same sold-comps table and price-per-sqft approach, but a new query scoped to the same city and ±20% of the target's size, since Week 5's city-wide average is too coarse to value a single home."

@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/30809860/README.md)
+[README.md](https://github.com/user-attachments/files/30812482/README.md)
 # Week 7 — Hybrid Recommendation Engine
 
 ## In one sentence
@@ -160,3 +160,29 @@ Week 7 is the first module that **combines earlier weeks** rather than adding a
 standalone capability: Week 6's embeddings supply the sense of "feel," Week 5's sold
 data supplies the pricing reality check, and Week 3's query patterns supply the
 candidates.
+
+### In one line
+
+> **Week 7 blends "how alike are the hard facts" (computed here) with "how alike do they
+> feel" (Week 6) into a single 0–100 recommendation score, then uses Week 5's sold data
+> to judge whether the asking price is fair. It is the first week that genuinely wires
+> earlier modules together.**
+
+```
+Week 7 [integration]  user likes this home
+                          -> recommend similar ones
+                          -> validate the price against sold comps
+                             ^ uses Week 6 semantics + Week 5 sold data
+```
+
+Job 1(推荐) 是代码级复用 Week 6——Week 7 自己写了一套硬指标打分(60 分),同时 import Week 6 的 cosine_similarity 来算语义相似度(40 分),两者相加得出 0–100 的推荐分。
+
+Job 2(价格验证) 是数据级复用 Week 5——它用的是 Week 5 那张 california_sold 成交表和"每平尺价"的思路,但 SQL 是 Week 7 自己新写的(同城 + 面积 ±20%),因为 Week 5 算的是全城行情,粒度太粗,不适合给单套房估价。
+
+更短的一句话版:
+
+Job 1 真的调用了 Week 6 的代码;Job 2 只借用 Week 5 的数据和方法,查询是自己写的。
+
+英文版(周会/面试用):
+
+"Job 1 reuses Week 6 at the code level — it imports the cosine similarity function for the semantic 40 points, on top of the structured 60 points I wrote here. Job 2 reuses Week 5 at the data level — same sold-comps table and price-per-sqft approach, but a new query scoped to the same city and ±20% of the target's size, since Week 5's city-wide average is too coarse to value a single home."

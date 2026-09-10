@@ -1,3 +1,4 @@
+[README.md](https://github.com/user-attachments/files/32074278/README.md)
 # Week 9 — Multi-Agent Orchestrator
 
 ## In one sentence
@@ -164,6 +165,14 @@ also embeds the 15 knowledge passages once; after that the index is reused.
   messages isn't an evaluation. The next step is a labeled set
   of sample messages, including tricky phrasings like the two above, run through the model
   with the results recorded.
+- **One message gets one category.** The model returns a single label, and `mixed` is fixed
+  to search + market, the one combination the handbook defines. A message that asks three
+  things, such as *"Find homes in Pasadena, are prices rising there, and what does DOM mean?"*,
+  still gets one label, and the extra question is dropped without telling the user. Other
+  pairs, such as knowledge + market, aren't combined either. Supporting this would mean
+  having the model split the message into sub-questions with one label each, then running
+  the independent ones in parallel and the dependent ones in order (a recommendation needs
+  the search results first).
 - **Recommendations use only Week 7's structured score (max 60).** The semantic 40 points
   would need an embedding call for every candidate listing on every request.
 - **Email is a placeholder** until the Week 11 approval-gated email agent exists.
